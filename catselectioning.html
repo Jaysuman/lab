@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>lab-2 Suman_Budhathoki</title>
+    <style>
+       body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+        }
+
+        button {
+            color: #fff;
+            background-color: #6c6f68;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 1em;
+        }
+
+        input[type="number"] {
+            padding: 8px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100px;
+        }
+
+        input[type="radio"] {
+            margin-right: 5px;
+            
+        }
+
+        #res {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+            background-color: #fff;
+            border-radius: 4px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            text-decoration: underline;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #ccc;
+            margin: 20px 0;
+        }
+
+        .heading {
+            font-size: 1.2em;
+            text-decoration: underline;
+        }
+
+        .breed {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+
+        .breed h3 {
+            margin-top: 0;
+        }
+
+        .breed p {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <button onclick="allName()">All Names</button>
+
+    <br><br>
+
+    <button onclick="healthIssues()">Health Issues</button>
+    <input type="number" id="healthIssuesInput" min="0" step="1">
+    <label for="healthIssuesInput"></label>
+
+    <br><br>
+
+    <button onclick="weightInfo()">Weight</button>
+    <label>
+        <input type="radio" name="weightUnit" value="imperial" checked> Imperial
+    </label>
+    <label>
+        <input type="radio" name="weightUnit" value="metric"> Metric
+    </label>
+
+    <br><br>
+
+    <button onclick="intelligenceInfo()">Intelligence-Friendly</button>
+
+    <br><br>
+
+    <button onclick="averageIntelligence()">Average Intelligence</button>
+
+    <br><br>
+
+    <button onclick="averageChildFriendly()">Average Intelligence For Child Friendly</button>
+
+    <div id="res"></div>
+
+    <script>
+        async function fetchBreeds() {
+            const jsonUrl = 'https://api.thecatapi.com/v1/breeds';
+            const response = await fetch(jsonUrl);
+            if (!response.ok) {
+                throw new Error('Something went wrong.');
+            }
+            return await response.json();
+        }
+
+        async function allName() {
+            const jsonContentElement = document.getElementById('res');
+            jsonContentElement.innerHTML = ""; // Clear previous results
+
+            try {
+                const data = await fetchBreeds();
+                // Display heading with total number of breeds
+                const heading = document.createElement('h2');
+                heading.textContent = `All Names (total=${data.length})`;
+                heading.className = 'heading';
+                jsonContentElement.appendChild(heading);
+
+                // Loop through the data and display each breed name with numbering
+                data.forEach((breed, index) => {
+                    const lineBreak = document.createElement('br');
+                    jsonContentElement.appendChild(document.createTextNode(`${index + 1}. ${breed.name}`));
+                    jsonContentElement.appendChild(lineBreak);
+                });
+            } catch (error) {
+                console.error('Error fetching JSON:', error);
+                jsonContentElement.textContent = 'Failed to load breed names.';
+            }
+        }
+
+        async function healthIssues() {
+            const jsonContentElement = document.getElementById('res');
+            jsonContentElement.innerHTML = ""; // Clear previous results
+            const minHealthIssues = parseInt(document.getElementById('healthIssuesInput').value) || 0;
+
+            try {
+                const data = await fetchBreeds(); 
+                // Display heading with number of health issues
+                const heading = document.createElement('h2');
+                heading.textContent = `Cat Breeds with Health Issues = ${minHealthIssues}:`;
+                heading.className = 'heading';
+                jsonContentElement.appendChild(heading);
+
+                // Loop through the data and display each breed's health issues with numbering
+                let count = 0;
+                data.forEach(breed => {
+                    if (breed.health_issues >= minHealthIssues) {
+                        count++;
+                        const lineBreak = document.createElement('br');
+                        jsonContentElement.appendChild(document.createTextNode(`${count}. ${breed.name}`));
+                        jsonContentElement.appendChild(lineBreak);
+                    }
+                });
+
+                // Display total number of breeds with health issues
+                const totalBreeds = document.createElement('div');
+                totalBreeds.textContent = `Total Breeds: ${count}`;
+                jsonContentElement.appendChild(document.createElement('hr'));
+                jsonContentElement.appendChild(totalBreeds);
+            } catch (error) {
+                console.error('Error fetching JSON:', error);
+                jsonContentElement.textContent = 'Failed to load health issues.';
+            }
+        }
+
+        async function weightInfo() {
+            const jsonContentElement = document.getElementById('res');
+            jsonContentElement.innerHTML = ""; // Clear previous results
+            const weightUnit = document.querySelector('input[name="weightUnit"]:checked').value;
+
+            try {
+                const data = await fetchBreeds();
+                // Display heading with weight unit
+                const heading = document.createElement('h2');
+                heading.textContent = `Weight in ${weightUnit.charAt(0).toUpperCase() + weightUnit.slice(1)}:`;
+                heading.className = 'heading';
+                jsonContentElement.appendChild(heading);
+
+                // Loop through the data and display each breed's weight with numbering and weight range in brackets
+                data.forEach((breed, index) => {
+                    const lineBreak = document.createElement('br');
+                    let weightRange;
+                    if (weightUnit === 'imperial') {
+                        weightRange = breed.weight.imperial; // Fetch the weight in the imperial unit
+                    } else {
+                        weightRange = breed.weight.metric; // Fetch the weight in the metric unit
+                    }
+                    const breedInfo = `${index + 1}. ${breed.name}: (${weightRange})`;
+                    jsonContentElement.appendChild(document.createTextNode(breedInfo));
+                    jsonContentElement.appendChild(lineBreak);
+                });
+            } catch (error) {
+                console.error('Error fetching JSON:', error);
+                jsonContentElement.textContent = 'Failed to load weight information.';
+            }
+        }
+
+        async function intelligenceInfo() {
+            const jsonContentElement = document.getElementById('res');
+            jsonContentElement.innerHTML = ""; // Clear previous results
+
+            try {
+                const data = await fetchBreeds();
+                // Display heading for intelligence
+                const heading = document.createElement('h2');
+                heading.textContent = 'Intelligence-Child Friendly (I-F):';
+                heading.className = 'heading';
+                jsonContentElement.appendChild(heading);
+
+                // Loop through the data and display each breed's intelligence level with numbering
+                data.forEach((breed, index) => {
+                    const lineBreak = document.createElement('br');
+                    const intelligenceFriendly = `(${breed.intelligence}-${breed.child_friendly})`;  
+                    const breedInfo = `${index + 1}. ${breed.name}: ${intelligenceFriendly}`;
+                    jsonContentElement.appendChild(document.createTextNode(breedInfo));
+                    jsonContentElement.appendChild(lineBreak);
+                });
+            } catch (error) {
+                console.error('Error fetching JSON:', error);
+                jsonContentElement.textContent = 'Failed to load intelligence information.';
+            }
+        }
+
+        async function averageIntelligence() {
+            const jsonContentElement = document.getElementById('res');
+            jsonContentElement.innerHTML = ""; // Clear previous results
+
+            try {
+                const data = await fetchBreeds();
+                const totalIntelligence = data.reduce((sum, breed) => sum + breed.intelligence, 0);
+                const averageIntelligence = (totalIntelligence / data.length).toFixed(2);
+
+                // Display heading for average intelligence
+                const heading = document.createElement('h2');
+                heading.textContent = 'Average Intelligence:';
+                heading.className = 'heading';
+                jsonContentElement.appendChild(heading);
+
+                // Display the average intelligence
+                const avgIntelligenceText = document.createElement('div');
+                avgIntelligenceText.textContent = `Average Intelligence: ${averageIntelligence}`;
+                jsonContentElement.appendChild(avgIntelligenceText);
+            } catch (error) {
+                console.error('Error fetching JSON:', error);
+                jsonContentElement.textContent = 'Failed to load average intelligence.';
+            }
+        }
+
+        async function averageChildFriendly() {
+            const jsonContentElement = document.getElementById('res');
+            jsonContentElement.innerHTML = ""; // Clear previous results
+
+            try {
+                const data = await fetchBreeds();
+                const childFriendlyBreeds = data.filter(breed => breed.child_friendly >= 4);
+                const totalIntelligence = childFriendlyBreeds.reduce((sum, breed) => sum + breed.intelligence, 0);
+                const averageIntelligence = (totalIntelligence / childFriendlyBreeds.length).toFixed(2);
+
+                // Display heading for average intelligence of child-friendly breeds
+                const heading = document.createElement('h2');
+                heading.textContent = 'Average Intelligence of Child-Friendly Breeds >=4:';
+                heading.className = 'heading';
+                jsonContentElement.appendChild(heading);
+
+                // Display the average intelligence of child-friendly breeds
+                const avgIntelligenceText = document.createElement('div');
+                avgIntelligenceText.textContent = `Average Intelligence: ${averageIntelligence}`;
+                jsonContentElement.appendChild(avgIntelligenceText);
+            } catch (error) {
+                console.error('Error fetching JSON:', error);
+                jsonContentElement.textContent = 'Failed to load average intelligence for child-friendly breeds.';
+            }
+        }
+    </script>
+
+</body>
+</html>
